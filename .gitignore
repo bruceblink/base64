@@ -1,0 +1,4 @@
+/.zig-cache/
+.idea
+*.iml
+zig-out
