@@ -30,6 +30,9 @@ const Base64 = struct {
 // Calculate the length of the encoded output
 // 每3个字节编码为4个字符 ceil((input_len + 2) / 3) * 4）
 fn _calc_encode_length(input: []const u8) !usize {
+    if (input.len < 3) {
+        return 4;
+    }
     // 除以3向上取整
     // 每3个字节编码为4个字符
     const n_groups: usize = try std.math.divCeil(usize, input.len, 3);
