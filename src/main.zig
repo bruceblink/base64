@@ -32,7 +32,7 @@ const Base64 = struct {
 fn _calc_encode_length(input: []const u8) !usize {
     // 除以3向上取整
     // 每3个字节编码为4个字符
-    const n_groups: usize = try std.math.divCeil(usize, input.len + 2, 3);
+    const n_groups: usize = try std.math.divCeil(usize, input.len, 3);
     return n_groups * 4;
 }
 
@@ -70,7 +70,13 @@ test "use base64 table" {
 }
 
 test "calculate encoded length" {
-    const input = "hello";
+    const input = "Man";
     const encoded_len = try _calc_encode_length(input);
-    try std.testing.expectEqual(8, encoded_len);
+    try std.testing.expectEqual(4, encoded_len);
+}
+
+test "calculate decoded length" {
+    const input = "TWFu";
+    const decoded_len = try _calc_decode_length(input);
+    try std.testing.expectEqual(3, decoded_len);
 }
