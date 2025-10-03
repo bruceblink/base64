@@ -36,6 +36,30 @@ fn _calc_encode_length(input: []const u8) !usize {
     return n_groups * 4;
 }
 
+// Calculate the length of the decoded output
+// 每4个字符解码为3个字节
+// ceil(input_len / 4) * 3 - padding_count
+fn _calc_decode_length(input: []const u8) !usize {
+    if (input.len < 4) {
+        return 3;
+    }
+    // 除以4向下取整
+    // 每4个字符解码为3个字节
+    // '='填充不计入解码长度
+    const n_groups: usize = try std.math.divFloor(usize, input.len, 4);
+    var multiple_groups: usize = n_groups * 3;
+    var i: usize = input.len - 1;
+    while (i > 0) : (i -= 1) {
+        if (input[i] == '=') {
+            multiple_groups -= 1;
+        } else {
+            break;
+        }
+    }
+
+    return multiple_groups;
+}
+
 test "use base64 table" {
     const base64 = Base64.init();
     try std.testing.expectEqual('c', base64._char_at(28));
