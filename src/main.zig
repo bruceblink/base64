@@ -83,3 +83,11 @@ test "calculate decoded length" {
     const decoded_len = try _calc_decode_length(input);
     try std.testing.expectEqual(3, decoded_len);
 }
+
+test "test bit move" {
+    const input = "Hi";
+    // 'H' = 72 = 01001000
+    // 'i' = 105 = 01101001
+    // 01001000 >> 2 = 00010010 = 18
+    try std.testing.expectEqual(18, input[0] >> 2);
+}
