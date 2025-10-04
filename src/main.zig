@@ -68,6 +68,36 @@ const Base64 = struct {
 
         return out;
     }
+
+    // Decode Base64 string to bytes
+    pub fn decode(self: Base64, allocator: std.mem.Allocator, input: []const u8) ![]u8 {
+        if (input.len == 0) {
+            return "";
+        }
+        const n_output = try _calc_decode_length(input);
+        var output = try allocator.alloc(u8, n_output);
+        var count: u8 = 0;
+        var iout: u64 = 0;
+        var buf = [4]u8{ 0, 0, 0, 0 };
+
+        for (0..input.len) |i| {
+            buf[count] = self._char_index(input[i]);
+            count += 1;
+            if (count == 4) {
+                output[iout] = (buf[0] << 2) + (buf[1] >> 4);
+                if (buf[2] != 64) {
+                    output[iout + 1] = (buf[1] << 4) + (buf[2] >> 2);
+                }
+                if (buf[3] != 64) {
+                    output[iout + 2] = (buf[2] << 6) + buf[3];
+                }
+                iout += 3;
+                count = 0;
+            }
+        }
+
+        return output;
+    }
 };
 
 // Calculate the length of the encoded output
@@ -133,4 +163,58 @@ test "test bit move" {
     // 'i' = 105 = 01101001
     // 01001000 >> 2 = 00010010 = 18
     try std.testing.expectEqual(18, input[0] >> 2);
+}
+
+test "test base64 encode" {
+    const input = "Man";
+    const allocator = std.testing.allocator;
+    const base64 = Base64.init();
+    const encoded = try base64.encode(allocator, input);
+    defer allocator.free(encoded);
+    try std.testing.expectEqualSlices(u8, "TWFu", encoded);
+}
+
+test "test base64 decode" {
+    const input = "TWFu";
+    const allocator = std.testing.allocator;
+    const base64 = Base64.init();
+    const decoded = try base64.decode(allocator, input);
+    defer allocator.free(decoded);
+    try std.testing.expectEqualSlices(u8, "Man", decoded);
+}
+
+test "test base64 encode with padding" {
+    const input = "Ma";
+    const allocator = std.testing.allocator;
+    const base64 = Base64.init();
+    const encoded = try base64.encode(allocator, input);
+    defer allocator.free(encoded);
+    try std.testing.expectEqualSlices(u8, "TWE=", encoded);
+}
+
+test "test base64 decode with padding" {
+    const input = "TWE=";
+    const allocator = std.testing.allocator;
+    const base64 = Base64.init();
+    const decoded = try base64.decode(allocator, input);
+    defer allocator.free(decoded);
+    try std.testing.expectEqualSlices(u8, "Ma", decoded);
+}
+
+test "test base64 encode with single char" {
+    const input = "M";
+    const allocator = std.testing.allocator;
+    const base64 = Base64.init();
+    const encoded = try base64.encode(allocator, input);
+    defer allocator.free(encoded);
+    try std.testing.expectEqualSlices(u8, "TQ==", encoded);
+}
+
+test "test base64 decode with single char" {
+    const input = "TQ==";
+    const allocator = std.testing.allocator;
+    const base64 = Base64.init();
+    const decoded = try base64.decode(allocator, input);
+    defer allocator.free(decoded);
+    try std.testing.expectEqualSlices(u8, "M", decoded);
 }
