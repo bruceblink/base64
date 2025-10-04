@@ -7,10 +7,12 @@ const std = @import("std");
 const lib = @import("base64_lib");
 
 pub fn main() !void {
+    var memory_buffer: [1000]u8 = undefined;
+    var fba = std.heap.FixedBufferAllocator.init(&memory_buffer);
+    const allocator = fba.allocator();
     const stdout = std.io.getStdOut().writer();
     try stdout.print("Hello, World!\n", .{});
 
-    const allocator = std.heap.page_allocator;
     const base64 = Base64.init();
 
     const input = "Hello, Zig!";
