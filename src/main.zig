@@ -6,7 +6,18 @@ const std = @import("std");
 /// This imports the separate module containing `root.zig`. Take a look in `build.zig` for details.
 const lib = @import("base64_lib");
 
-pub fn main() !void {}
+pub fn main() !void {
+    const stdout = std.io.getStdOut().writer();
+    try stdout.print("Hello, World!\n", .{});
+
+    const allocator = std.heap.page_allocator;
+    const base64 = Base64.init();
+
+    const input = "Hello, Zig!";
+    const encoded = try base64.encode(allocator, input);
+    defer allocator.free(encoded);
+    try stdout.print("Encoded: {s}\n", .{encoded});
+}
 
 const Base64 = struct {
     // Base64 encoding table
@@ -22,8 +33,21 @@ const Base64 = struct {
     }
 
     // Get character at index from Base64 table
-    pub fn _char_at(self: Base64, index: usize) u8 {
+    fn _char_at(self: Base64, index: usize) u8 {
         return self._table[index];
+    }
+
+    fn _char_index(self: Base64, char: u8) u8 {
+        if (char == '=')
+            return 64;
+        var index: u8 = 0;
+        for (0..63) |i| {
+            if (self._char_at(i) == char)
+                break;
+            index += 1;
+        }
+
+        return index;
     }
 
     // Encode input bytes to Base64 string
@@ -81,7 +105,7 @@ const Base64 = struct {
         var buf = [4]u8{ 0, 0, 0, 0 };
 
         for (0..input.len) |i| {
-            buf[count] = self._char_index(input[i]);
+            buf[count] = self._char_at(input[i]);
             count += 1;
             if (count == 4) {
                 output[iout] = (buf[0] << 2) + (buf[1] >> 4);
